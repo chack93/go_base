@@ -3,8 +3,10 @@ VERSION ?= 1.0.0
 HOST ?= 127.0.0.1
 PORT ?= 8080
 DOCKER_NETWORK ?= net_app
-DATABASE_URL ?= postgres://postgres:postgres@db_postgres:5432/${APP_NAME}?sslmode=disable
-#DATABASE_URL ?= postgres://root@db_cockroach:26257/${APP_NAME}?sslmode=disable
+#DATABASE_URL ?= postgres://postgres:postgres@db_postgres:5432/${APP_NAME}?sslmode=disable
+DATABASE_URL ?= postgres://root@db_cockroach:26257/${APP_NAME}?sslmode=disable
+TEST_DATABASE_URL ?= postgres://root@db_cockroach:26257/${APP_NAME}_test?sslmode=disable
+TEST_POSTGRES_URL := $(shell echo ${TEST_DATABASE_URL} | sed "s/${APP_NAME}_test/postgres/")
 
 .PHONY: help
 help:
@@ -20,7 +22,7 @@ help:
 		- docker-stop     stop docker container ${APP_NAME}\n\
 		- docker-run      run development docker container ${APP_NAME}:latest, use with reverse proxy\n\
 		- release         push latest image to ghcr, login using personal access token env variable GHCR_PAT\n\
-		- deploy          release latest image on live server, env variable: REMOTE_SERVER\n\
+		- deploy          release latest image on live server, env variable: CLOUD_REMOTE\n\
 		- help            display this message"
 
 .PHONY: all
@@ -41,9 +43,8 @@ build:
 
 .PHONY: test
 test:
-	DATABASE_USETESTDB=true \
-	DATABASE_URL=${DATABASE_URL} \
-	go test ./...
+	psql ${TEST_POSTGRES_URL} -c "DROP DATABASE ${APP_NAME}_test" || true
+	DATABASE_URL=${TEST_DATABASE_URL} go test ./...
 
 vet:
 	go vet ./...
@@ -111,7 +112,7 @@ release: ensure_builder
 
 .PHONY: deploy
 deploy:
-	ssh ${REMOTE_SERVER} ' \
+	ssh ${CLOUD_REMOTE} ' \
 		echo ${GHCR_PAT} | docker login ghcr.io --username ${GHCR_USER} --password-stdin; \
 		docker pull ghcr.io/${GHCR_USER}/${APP_NAME}:${VERSION}; \
 		docker pull ghcr.io/${GHCR_USER}/${APP_NAME}:latest; \

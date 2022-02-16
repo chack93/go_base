@@ -43,7 +43,7 @@ func (srv *Server) Init(wg *sync.WaitGroup) error {
 	apiAppGroup.POST("/session/", session.HandlerCreate)
 	apiAppGroup.GET("/session/", session.HandlerList)
 	apiAppGroup.GET("/session/:id", session.HandlerRead)
-	apiAppGroup.PUT("/session/:id", session.HandlerUpdate)
+	apiAppGroup.PUT("/session", session.HandlerUpdate)
 	apiAppGroup.DELETE("/session/:id", session.HandlerDelete)
 
 	address := fmt.Sprintf("%s:%s", viper.GetString("server.host"), viper.GetString("server.port"))

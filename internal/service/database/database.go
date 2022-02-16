@@ -4,36 +4,46 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+	"sync"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/schema"
 )
 
-type Database struct {
-	db *gorm.DB
+var lock = &sync.Mutex{}
+
+type database struct {
+	DB *gorm.DB
 }
 
-var database *Database
+var dbInstance *database
 
-func Get() *Database {
-	return database
+func Get() *gorm.DB {
+	if dbInstance == nil {
+		New()
+	}
+	return dbInstance.DB
 }
 
-func New() *Database {
-	database = &Database{}
-	return database
+func New() *database {
+	if dbInstance == nil {
+		lock.Lock()
+		defer lock.Unlock()
+		if dbInstance == nil {
+			dbInstance = &database{}
+		}
+	}
+	return dbInstance
 }
 
-func (s *Database) Init() error {
+func (s *database) Init() error {
 	dbUrl, err := url.Parse(viper.GetString("database.url"))
 	if err != nil {
 		logrus.Errorf("database.url config invalid: %s, err: %v", dbUrl, err)
 		return err
-	}
-	if viper.GetBool("database.usetestdb") {
-		dbUrl.Path += "_test"
 	}
 
 	if err := ensureAppTableExists(*dbUrl); err != nil {
@@ -41,17 +51,16 @@ func (s *Database) Init() error {
 		return err
 	}
 
-	db, err := gorm.Open(postgres.Open(dbUrl.String()), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(dbUrl.String()), &gorm.Config{
+		NamingStrategy: schema.NamingStrategy{
+			TablePrefix: strings.Trim(dbUrl.Path, "/") + ".",
+		},
+	})
 	if err != nil {
 		logrus.Errorf("open db connection failed, err: %v", err)
 		return err
 	}
-	s.db = db
-
-	if err := db.AutoMigrate(); err != nil {
-		logrus.Errorf("auto-migrate db failed, err: %v", err)
-		return err
-	}
+	s.DB = db
 
 	logrus.Infof("connected to host: %s%s", dbUrl.Host, dbUrl.Path)
 	return nil

@@ -1,29 +1,50 @@
 package test
 
 import (
-	"io"
+	"bytes"
+	"encoding/json"
 	"net/http/httptest"
+	"os"
 	"strings"
+	"testing"
 	"time"
 
+	"github.com/chack93/go_base/internal/domain"
 	"github.com/chack93/go_base/internal/service/config"
 	"github.com/chack93/go_base/internal/service/database"
+	"github.com/chack93/go_base/internal/service/logger"
 	"github.com/chack93/go_base/internal/service/model"
-	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/sirupsen/logrus"
 )
+
+func TestMain(m *testing.M) {
+	if err := config.Init(); err != nil {
+		logrus.Fatalf("config init failed, err: %v", err)
+	}
+	if err := logger.Init(); err != nil {
+		logrus.Fatalf("log init failed, err: %v", err)
+	}
+	if err := database.New().Init(); err != nil {
+		logrus.Fatalf("database init failed, err: %v", err)
+	}
+	if err := domain.Init(); err != nil {
+		logrus.Fatalf("domain init failed, err: %v", err)
+	}
+
+	os.Exit(m.Run())
+}
 
 func Request(
 	method string,
 	path string,
 	paramValues []string,
-	body io.Reader,
+	body interface{},
 ) (echo.Context, *httptest.ResponseRecorder) {
-	ensureDbConnection()
-
 	e := echo.New()
-	req := httptest.NewRequest(method, "/", body)
+	bodyJson, _ := json.Marshal(body)
+	req := httptest.NewRequest(method, "/", bytes.NewReader(bodyJson))
+	req.Header.Add(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	ctx := e.NewContext(req, rec)
 	var paramNames = []string{}
@@ -38,9 +59,7 @@ func Request(
 	return ctx, rec
 }
 
-func CleanModel(a *model.Model, b *model.Model) {
-	a.UUID = uuid.Nil
-	b.UUID = uuid.Nil
+func CleanModelTS(a *model.Model, b *model.Model) {
 	now := time.Now()
 	a.CreatedAt = now
 	b.CreatedAt = now
@@ -48,16 +67,6 @@ func CleanModel(a *model.Model, b *model.Model) {
 	b.UpdatedAt = now
 	a.DeletedAt.Time = now
 	b.DeletedAt.Time = now
-}
-
-func ensureDbConnection() {
-	if database.Get() != nil {
-		return
-	}
-	if err := config.Init(); err != nil {
-		logrus.Fatalf("config init failed, err: %v", err)
-	}
-	if err := database.New().Init(); err != nil {
-		logrus.Fatalf("database init failed, err: %v", err)
-	}
+	a.DeletedAt.Valid = false
+	b.DeletedAt.Valid = false
 }
