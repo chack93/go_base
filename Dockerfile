@@ -1,12 +1,13 @@
-FROM golang:1-alpine AS builder
+FROM golang:1 AS builder
 WORKDIR /app
 COPY . .
-RUN go mod tidy -compat 1.17
-RUN go build -o app.bin cmd/api/main.go
+RUN make deps
+RUN make docs
+RUN make build
 
 FROM alpine:3 AS runner
 WORKDIR /app
-COPY --from=builder /app/app.bin app.bin
+COPY --from=builder /app/bin/* app.bin
 RUN chown -R nobody: /app
 ENV HOST=0.0.0.0
 ENV PORT=8080

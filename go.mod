@@ -3,6 +3,7 @@ module github.com/chack93/go_base
 go 1.17
 
 require (
+	github.com/deepmap/oapi-codegen v1.9.1
 	github.com/google/uuid v1.3.0
 	github.com/labstack/echo/v4 v4.6.3
 	github.com/sirupsen/logrus v1.8.1
@@ -45,7 +46,7 @@ require (
 	golang.org/x/net v0.0.0-20210913180222-943fd674d43e // indirect
 	golang.org/x/sys v0.0.0-20211210111614-af8b64212486 // indirect
 	golang.org/x/text v0.3.7 // indirect
-	golang.org/x/time v0.0.0-20201208040808-7e3f01d25324 // indirect
+	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba // indirect
 	gopkg.in/ini.v1 v1.66.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect

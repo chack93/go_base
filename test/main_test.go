@@ -5,15 +5,14 @@ import (
 	"encoding/json"
 	"net/http/httptest"
 	"os"
-	"strings"
 	"testing"
 	"time"
 
 	"github.com/chack93/go_base/internal/domain"
+	"github.com/chack93/go_base/internal/domain/common"
 	"github.com/chack93/go_base/internal/service/config"
 	"github.com/chack93/go_base/internal/service/database"
 	"github.com/chack93/go_base/internal/service/logger"
-	"github.com/chack93/go_base/internal/service/model"
 	"github.com/labstack/echo/v4"
 	"github.com/sirupsen/logrus"
 )
@@ -28,7 +27,7 @@ func TestMain(m *testing.M) {
 	if err := database.New().Init(); err != nil {
 		logrus.Fatalf("database init failed, err: %v", err)
 	}
-	if err := domain.Init(); err != nil {
+	if err := domain.DbMigrate(); err != nil {
 		logrus.Fatalf("domain init failed, err: %v", err)
 	}
 
@@ -38,7 +37,6 @@ func TestMain(m *testing.M) {
 func Request(
 	method string,
 	path string,
-	paramValues []string,
 	body interface{},
 ) (echo.Context, *httptest.ResponseRecorder) {
 	e := echo.New()
@@ -47,26 +45,15 @@ func Request(
 	req.Header.Add(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	ctx := e.NewContext(req, rec)
-	var paramNames = []string{}
-	for _, el := range strings.Split(path, "/") {
-		if strings.Index(el, ":") == 0 {
-			paramNames = append(paramNames, el[1:])
-		}
-	}
 	ctx.SetPath(path)
-	ctx.SetParamNames(paramNames...)
-	ctx.SetParamValues(paramValues...)
 	return ctx, rec
 }
 
-func CleanModelTS(a *model.Model, b *model.Model) {
+func CleanModelTS(a *common.BaseModel) {
 	now := time.Now()
 	a.CreatedAt = now
-	b.CreatedAt = now
 	a.UpdatedAt = now
-	b.UpdatedAt = now
-	a.DeletedAt.Time = now
-	b.DeletedAt.Time = now
-	a.DeletedAt.Valid = false
-	b.DeletedAt.Valid = false
+	//for gorm soft delete feature
+	//a.DeletedAt.Time = now
+	//a.DeletedAt.Valid = false
 }

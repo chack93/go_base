@@ -1,5 +1,5 @@
-APP_NAME=go_base
-VERSION ?= 1.0.0
+APP_NAME = go_base
+VERSION = 1.0.0
 HOST ?= 127.0.0.1
 PORT ?= 8080
 DOCKER_NETWORK ?= net_app
@@ -11,7 +11,8 @@ TEST_POSTGRES_URL := $(shell echo ${TEST_DATABASE_URL} | sed "s/${APP_NAME}_test
 .PHONY: help
 help:
 	@echo "make options\n\
-		- all             clean, deps, test, vet, fmt, lint & build\n\
+		- all             clean, deps, docs, test, vet, fmt, lint & build\n\
+		- docs            generate domain files from swagger definition\n\
 		- deps            fetch all dependencies\n\
 		- clean           clean build directory bin/\n\
 		- build           build binary bin/${APP_NAME}\n\
@@ -32,17 +33,21 @@ all: clean deps test vet fmt lint build
 deps:
 	go mod tidy -compat 1.17
 
+.PHONY: docs
+docs:
+	VERSION=${VERSION} APP_NAME=${APP_NAME} docs/swagger_gen.sh
+
 .PHONY: clean
 clean:
 	go clean
 	rm -rf bin
 
 .PHONY: build
-build:
+build: docs
 	go build -o bin/${APP_NAME} cmd/api/main.go
 
 .PHONY: test
-test:
+test: build
 	psql ${TEST_POSTGRES_URL} -c "DROP DATABASE ${APP_NAME}_test" || true
 	DATABASE_URL=${TEST_DATABASE_URL} go test ./...
 

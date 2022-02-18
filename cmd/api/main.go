@@ -21,7 +21,7 @@ func main() {
 	if err := database.New().Init(); err != nil {
 		logrus.Fatalf("database init failed, err: %v", err)
 	}
-	if err := domain.Init(); err != nil {
+	if err := domain.DbMigrate(); err != nil {
 		logrus.Fatalf("domain init failed, err: %v", err)
 	}
 

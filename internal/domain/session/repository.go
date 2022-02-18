@@ -10,9 +10,8 @@ func CreateSession(model *Session) (err error) {
 	model.SetInit()
 	if err = database.Get().Create(model).Error; err != nil {
 		logrus.Errorf("failed, err: %v", err)
-		return err
 	}
-	return nil
+	return
 }
 
 func ListSession(modelList *[]Session) (err error) {
@@ -29,9 +28,15 @@ func ReadSession(id uuid.UUID, model *Session) (err error) {
 	return
 }
 
-func UpdateSession(model *Session) (err error) {
-	model.SetUpdate()
-	if err = database.Get().Save(model).Error; err != nil {
+func UpdateSession(id uuid.UUID, model *Session) (err error) {
+	original := Session{}
+	if err = ReadSession(id, &original); err != nil {
+		logrus.Errorf("read failed, id: %s, err: %v", model.ID.String(), err)
+		return
+	}
+	original.SetUpdate()
+	original.Description = model.Description
+	if err = database.Get().Save(original).Error; err != nil {
 		logrus.Errorf("failed, id: %s, err: %v", model.ID.String(), err)
 	}
 	return
@@ -40,6 +45,7 @@ func UpdateSession(model *Session) (err error) {
 func DeleteSession(id uuid.UUID, model *Session) (err error) {
 	if err = ReadSession(id, model); err != nil {
 		logrus.Errorf("read failed, id: %s, err: %v", model.ID.String(), err)
+		return
 	}
 	if err = database.Get().Delete(model).Error; err != nil {
 		logrus.Errorf("failed, id: %s, err: %v", model.ID.String(), err)

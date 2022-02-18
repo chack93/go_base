@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 	"net/http"
 	"os"
@@ -10,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/chack93/go_base/internal/domain/session"
+	"github.com/chack93/go_base/internal/domain"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/sirupsen/logrus"
@@ -32,6 +33,12 @@ func New() *Server {
 	return server
 }
 
+//go:embed swagger/swagger_gen.yaml
+var swaggerYaml []byte
+
+//go:embed swagger/index.html
+var swaggerHtml []byte
+
 func (srv *Server) Init(wg *sync.WaitGroup) error {
 	srv.echo = echo.New()
 	srv.echo.HideBanner = true
@@ -39,12 +46,20 @@ func (srv *Server) Init(wg *sync.WaitGroup) error {
 	srv.echo.Use(middleware.Logger())
 	srv.echo.Use(middleware.Recover())
 
-	apiAppGroup := srv.echo.Group("/api/go_base")
-	apiAppGroup.POST("/session/", session.HandlerCreate)
-	apiAppGroup.GET("/session/", session.HandlerList)
-	apiAppGroup.GET("/session/:id", session.HandlerRead)
-	apiAppGroup.PUT("/session", session.HandlerUpdate)
-	apiAppGroup.DELETE("/session/:id", session.HandlerDelete)
+	baseURL := "/api/go_base"
+	apiGroup := srv.echo.Group(baseURL)
+	apiGroup.GET("/health", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, struct {
+			Status string
+		}{"ok"})
+	})
+	apiGroup.GET("/doc", func(c echo.Context) error {
+		return c.HTMLBlob(http.StatusOK, swaggerHtml)
+	})
+	apiGroup.GET("/doc/swagger.yaml", func(c echo.Context) error {
+		return c.HTMLBlob(http.StatusOK, swaggerYaml)
+	})
+	domain.RegisterHandlers(srv.echo, baseURL)
 
 	address := fmt.Sprintf("%s:%s", viper.GetString("server.host"), viper.GetString("server.port"))
 	go func() {
