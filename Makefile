@@ -16,7 +16,7 @@ help:
 		- deps            fetch all dependencies\n\
 		- clean           clean build directory bin/\n\
 		- build           build binary bin/${APP_NAME}\n\
-		- test            run test\n\
+		- test            drops _test database, then run test cases\n\
 		- run             run localy at HOST:PORT ${HOST}:${PORT}\n\
 		- docker-destroy  destroy docker container & image ${APP_NAME}\n\
 		- docker-build    build production docker image ${APP_NAME}:${VERSION}\n\
@@ -35,7 +35,7 @@ deps:
 
 .PHONY: docs
 docs:
-	VERSION=${VERSION} APP_NAME=${APP_NAME} docs/swagger_gen.sh
+	VERSION=${VERSION} APP_NAME=${APP_NAME} docs/swagger-gen.sh
 
 .PHONY: clean
 clean:
@@ -56,7 +56,6 @@ vet:
 
 fmt:
 	go list -f '{{.Dir}}' ./... | grep -v /vendor/ | xargs -L1 gofmt -l
-	test -z $$(go list -f '{{.Dir}}' ./... | grep -v /vendor/ | xargs -L1 gofmt -l)
 
 lint:
 	go list ./... | grep -v /vendor/ | xargs -L1 golint -set_exit_status
