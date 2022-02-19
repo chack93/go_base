@@ -54,6 +54,9 @@ func (srv *Server) Init(wg *sync.WaitGroup) error {
 		}{"ok"})
 	})
 	apiGroup.GET("/doc", func(c echo.Context) error {
+		return c.Redirect(http.StatusMovedPermanently, "doc/")
+	})
+	apiGroup.GET("/doc", func(c echo.Context) error {
 		return c.HTMLBlob(http.StatusOK, swaggerHtml)
 	})
 	apiGroup.GET("/doc/swagger.yaml", func(c echo.Context) error {
