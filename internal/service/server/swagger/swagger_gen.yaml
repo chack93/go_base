@@ -32,7 +32,7 @@ components:
         type: object
     Session:
       allOf:
-      - $ref: ../common/common.yaml#/components/schemas/BaseModel
+      - $ref: '#/components/schemas/BaseModel'
       - $ref: '#/components/schemas/NewSession'
       - properties:
           joinCode:
@@ -71,7 +71,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: ../common/common.yaml#/components/schemas/Error
+                $ref: '#/components/schemas/Error'
           description: unexpected error
     post:
       description: Creates a new session with random joinCode
@@ -94,13 +94,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: ../common/common.yaml#/components/schemas/Error
+                $ref: '#/components/schemas/Error'
           description: invalid request body
         default:
           content:
             application/json:
               schema:
-                $ref: ../common/common.yaml#/components/schemas/Error
+                $ref: '#/components/schemas/Error'
           description: unexpected error
   /session/{id}:
     delete:
@@ -121,13 +121,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: ../common/common.yaml#/components/schemas/Error
+                $ref: '#/components/schemas/Error'
           description: not found
         default:
           content:
             application/json:
               schema:
-                $ref: ../common/common.yaml#/components/schemas/Error
+                $ref: '#/components/schemas/Error'
           description: unexpected error
     get:
       description: Read session of id
@@ -151,13 +151,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: ../common/common.yaml#/components/schemas/Error
+                $ref: '#/components/schemas/Error'
           description: not found
         default:
           content:
             application/json:
               schema:
-                $ref: ../common/common.yaml#/components/schemas/Error
+                $ref: '#/components/schemas/Error'
           description: unexpected error
     put:
       description: update session of id
@@ -184,17 +184,17 @@ paths:
           content:
             application/json:
               schema:
-                $ref: ../common/common.yaml#/components/schemas/Error
+                $ref: '#/components/schemas/Error'
           description: invalid request body
         "404":
           content:
             application/json:
               schema:
-                $ref: ../common/common.yaml#/components/schemas/Error
+                $ref: '#/components/schemas/Error'
           description: not found
         default:
           content:
             application/json:
               schema:
-                $ref: ../common/common.yaml#/components/schemas/Error
+                $ref: '#/components/schemas/Error'
           description: unexpected error
